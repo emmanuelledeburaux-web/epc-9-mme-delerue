@@ -1,0 +1,78 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Opération EPC-9 — Mme Delerue</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#202332;background:#f1f2f5}*{box-sizing:border-box}
+body{margin:0}
+header{background:#171a25;color:white;padding:24px 16px;text-align:center;border-bottom:8px solid #d52336}
+header h1{margin:0;font-size:clamp(26px,6vw,42px)}
+header p{margin:10px 0 0;color:#ffe56b}
+main{max-width:760px;margin:24px auto;padding:0 14px 40px}
+.panel{background:white;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 3px 14px #0001}
+.pill{display:inline-block;background:#ffe56b;padding:6px 12px;border-radius:25px;font-weight:bold}
+button,.btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;margin-top:12px;font:inherit;font-weight:bold;background:#d52336;color:white;text-align:center;cursor:pointer;text-decoration:none}
+button:hover,.btn:hover{background:#a9182a}
+.choice{background:#f3f4f7;color:#222;border:2px solid #dfe2eb;text-align:left}
+.choice:hover{background:#fff0f2}
+#msg{font-weight:bold;margin-top:14px;line-height:1.5}
+.ok{color:#13623e}.non{color:#a9182a}
+#grid{display:grid;grid-template-columns:repeat(3,1fr);aspect-ratio:3/4;max-width:540px;margin:20px auto 0;border:3px solid #161a25;background:#dfe2e7}
+.tile{border:1px solid white;display:flex;align-items:center;justify-content:center;background:#f9f9fc;min-width:0;overflow:hidden}
+.tile span{text-align:center;font-weight:bold;color:#666;font-size:clamp(13px,3vw,19px)}
+.tile small{display:block;font-weight:normal;font-size:11px}
+.unlocked{background-image:url('affiche.jpg');background-size:300% 300%;background-repeat:no-repeat}
+#preview{height:250px;width:188px;margin:16px auto;background-image:url('affiche.jpg');background-size:300% 300%;border:3px solid #111}
+.hidden{display:none}
+.muted{color:#586070;font-size:14px}
+</style>
+</head>
+<body>
+<header><h1>OPÉRATION EPC-9</h1><p>Le défi mystère de Mme Delerue</p></header>
+<main><div id="app"></div></main>
+<script>
+const defis=[
+{t:'Accueil client',q:'Une cliente entre dans le magasin. Quelle attitude donne le meilleur départ à la relation ?',a:['Continuer à ranger sans relever la tête.','Sourire, saluer et se rendre disponible sans insister.','Demander immédiatement combien elle compte dépenser.'],b:1},
+{t:'Facing',q:'Le rayon semble vide alors que des produits sont reculés. Que faites-vous ?',a:['Avancer et aligner les produits, contrôler la propreté et les étiquettes.','Masquer les trous avec les étiquettes prix.','Mettre les articles au hasard sur l’étagère du haut.'],b:0},
+{t:'Encaissement et SBAM',q:'Dans la méthode SBAM, que signifient ces quatre lettres ?',a:['Stock, Budget, Achats, Marchandise.','Sourire, Bonjour, Au revoir, Merci.','Sécurité, Bon de commande, Avoir, Monnaie.'],b:1},
+{t:'Sécurité',q:'Un carton encombre une sortie de secours. Quelle réaction est adaptée ?',a:['Le laisser pour le rangement de fin de journée.','Déplacer le panneau de sortie.','Faire dégager le passage sans se mettre en danger et prévenir selon la procédure.'],b:2},
+{t:'Stocks et PDA',q:'Un article manque en rayon. Comment utiliser le PDA ?',a:['Consulter la disponibilité et la localisation en stock pour réapprovisionner.','Changer son prix au hasard.','Ignorer le manque.'],b:0},
+{t:'Vente additionnelle',q:'Une cliente achète une gourde. Quelle proposition complémentaire est pertinente ?',a:['Un article sans rapport, coûte que coûte.','Un goupillon adapté si cela répond à son besoin.','Deux autres gourdes sans lui demander son avis.'],b:1},
+{t:'Tête de gondole',q:'À quoi sert une tête de gondole bien organisée ?',a:['Cacher les articles invendus.','Entreposer les cartons.','Mettre en valeur une sélection de produits de façon visible et attractive.'],b:2},
+{t:'FIFO / PEPS',q:'Vous recevez des cahiers lundi puis jeudi. Avec PEPS, quel lot sort en premier ?',a:['Le lot reçu lundi.','Le lot reçu jeudi.','Un lot choisi au hasard.'],b:0},
+{t:'Fidélisation',q:'Une cliente fidèle revient demander conseil. Quelle pratique renforce la relation ?',a:['Lui proposer le produit le plus cher sans l’écouter.','Écouter son besoin et proposer une réponse adaptée.','Lui imposer un programme de fidélité.'],b:1}
+];
+const CLE='epc9_mme_delerue_pieces';
+let pieces=[];
+try{pieces=JSON.parse(localStorage.getItem(CLE)||'[]').filter(n=>Number.isInteger(n)&&n>=1&&n<=9)}catch(e){}
+const params=new URLSearchParams(location.search);
+const numero=Number(params.get('defi'));
+const app=document.getElementById('app');
+const fond=(n)=>{let c=(n-1)%3,r=Math.floor((n-1)/3);return `background-position:${c*50}% ${r*50}%`};
+function sauver(n){if(!pieces.includes(n))pieces.push(n);localStorage.setItem(CLE,JSON.stringify(pieces))}
+function accueil(){
+ app.innerHTML=`<section class="panel"><span class="pill">${pieces.length} / 9 pièces récupérées</span><h2>Votre puzzle mystère</h2><p>Répondez aux neuf défis reçus par mail. Chaque bonne réponse place automatiquement sa pièce sur cette affiche.</p><div id="grid"></div><p class="muted">Utilisez toujours le même navigateur sur le même appareil pour conserver votre progression.</p>${pieces.length===9?'<h2 class="ok">🎉 Mission accomplie ! Votre invitation est révélée.</h2>':''}</section>`;
+ const grille=document.getElementById('grid');
+ for(let n=1;n<=9;n++)grille.insertAdjacentHTML('beforeend',pieces.includes(n)?`<div class="tile unlocked" style="${fond(n)}" aria-label="Pièce P${n} obtenue"></div>`:`<div class="tile"><span>P${n}<small>À débloquer</small></span></div>`);
+}
+function defi(n){
+ const d=defis[n-1];
+ app.innerHTML=`<section class="panel"><span class="pill">DÉFI P${n} / 9</span><h2>${d.t}</h2><p><strong>Mme Delerue, à vous de jouer !</strong></p><h3>${d.q}</h3><div id="reponses"></div><div id="msg" role="status"></div><div id="gain" class="hidden"><div id="preview" style="${fond(n)}"></div><a class="btn" href="./">🧩 Voir mon puzzle complété</a></div></section>`;
+ d.a.forEach((reponse,i)=>{
+   const bouton=document.createElement('button');bouton.className='choice';bouton.textContent=String.fromCharCode(65+i)+'. '+reponse;
+   bouton.onclick=()=>{
+     const message=document.getElementById('msg');
+     if(i===d.b){sauver(n);message.className='ok';message.textContent=`🎉 Bonne réponse ! Pièce P${n} débloquée et ajoutée automatiquement à votre puzzle.`;document.getElementById('gain').classList.remove('hidden');document.querySelectorAll('.choice').forEach(b=>b.disabled=true)}
+     else{message.className='non';message.textContent='Pas encore ! Essayez une autre réponse.'}
+   };
+   document.getElementById('reponses').appendChild(bouton);
+ });
+ if(pieces.includes(n)){document.getElementById('msg').className='ok';document.getElementById('msg').textContent=`Cette pièce P${n} est déjà obtenue.`;document.getElementById('gain').classList.remove('hidden')}
+}
+if(Number.isInteger(numero)&&numero>=1&&numero<=9)defi(numero);else accueil();
+</script>
+</body>
+</html>
